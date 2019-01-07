@@ -189,6 +189,52 @@ class MergeImage{
         imagedestroy($tmp_im);
         return true;
     }
+    
+        /** png透明图像合成
+     * @param $url
+     * @param $x1
+     * @param $y1
+     * @param $x2
+     * @param $y2
+     * @return bool
+     */
+    public function mergeImageAlphaPng($url, $x1, $y1, $x2, $y2)
+    {
+        $new_w = abs(($x1-$x2)/100*$this->width);
+        $new_h = abs(($y1-$y2)/100*$this->height);
+        if($new_w == 0 ||$new_h == 0) {
+            return false;
+        }
+        if(!$info = @getimagesize($url)) {
+            return false;
+        }
+        switch ($info[2]) {
+            case IMAGETYPE_PNG:
+                $im_image = imagecreatefrompng($url);
+                break;
+            default:
+                return false;
+                break;
+        }
+        /**
+         * 重采样 并 保留透明度
+         */
+        $tmp_im = imagecreatetruecolor($new_w,$new_h);
+        imagealphablending( $tmp_im, false );
+        imagesavealpha( $tmp_im, true );
+
+        $color = imagecolorallocate($tmp_im,255,255,255);
+        imagefill($tmp_im,0,0,$color);
+        imagecopyresampled($tmp_im,$im_image,0,0,0,0,$new_w,$new_h,$info[0],$info[1]);
+        //只能使用  imagecopy imagecopyresampled   imagecopymerge无效
+//        imagecopy($this->im, $tmp_im, $x1/100*$this->width,$y1/100*$this->height, 0, 0, $new_w, $new_h);
+        imagecopyresampled($this->im,$tmp_im,$x1/100*$this->width,$y1/100*$this->height,0,0,$new_w,$new_h,$new_w,$new_h);
+//        imagecopymerge($this->im,$tmp_im, $x1/100*$this->width,$y1/100*$this->height,0,0,$new_w,$new_h, 100);
+        imagedestroy($im_image);
+        imagedestroy($tmp_im);
+        return true;
+    }
+    
 
     /** 划线
      * @param $x1 填充x起点的百分比 (0-100)
